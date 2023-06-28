@@ -1,0 +1,65 @@
+#include "SolarSystem.h"
+
+// Gravitational constant (in m^3 / (kg * s^2))
+const double GRAVITY_CONSTANT = 6.67430 * pow(10, -11);
+
+// Initialize solar system bodies
+void ASolarSystem::InitializeBodies()
+{
+    // Create the Sun
+    ABody* sun = CreateCelestialBody("Sun", 1.989 * pow(10, 30));
+
+    // Create the major planets
+    APlanet* mercury = CreatePlanet("Mercury", 3.3011 * pow(10, 23), 5.791 * pow(10, 10), sun);
+    APlanet* venus = CreatePlanet("Venus", 4.8675 * pow(10, 24), 1.082 * pow(10, 11), sun);
+    APlanet* earth = CreatePlanet("Earth", 5.972 * pow(10, 24), 1.496 * pow(10, 11), sun);
+    APlanet* mars = CreatePlanet("Mars", 6.4171 * pow(10, 23), 2.279 * pow(10, 11), sun);
+    APlanet* jupiter = CreatePlanet("Jupiter", 1.8982 * pow(10, 27), 7.783 * pow(10, 11), sun);
+    APlanet* saturn = CreatePlanet("Saturn", 5.6834 * pow(10, 26), 1.427 * pow(10, 12), sun);
+    APlanet* uranus = CreatePlanet("Uranus", 8.6810 * pow(10, 25), 2.871 * pow(10, 12), sun);
+    APlanet* neptune = CreatePlanet("Neptune", 1.02413 * pow(10, 26), 4.498 * pow(10, 12), sun);
+
+    // Store the major planets in an array for easy access
+    majorPlanets.Add(mercury);
+    majorPlanets.Add(venus);
+    majorPlanets.Add(earth);
+    majorPlanets.Add(mars);
+    majorPlanets.Add(jupiter);
+    majorPlanets.Add(saturn);
+    majorPlanets.Add(uranus);
+    majorPlanets.Add(neptune);
+}
+
+// Update the positions of celestial bodies based on time
+void ASolarSystem::UpdateBodies(float DeltaTime)
+{
+    for (ABody* planet : majorPlanets)
+    {
+        // Calculate total acceleration acting on the planet
+        FVector acceleration = CalculateTotalAcceleration(planet);
+
+        // Update the velocity and position of the planet
+        planet->SetVelocity(planet->GetVelocity() + acceleration * DeltaTime);
+        planet->SetActorLocation(planet->GetActorLocation() + planet->GetVelocity() * DeltaTime);
+    }
+}
+
+// Calculate the total acceleration acting on a planet due to gravitational forces from other bodies
+FVector ASolarSystem::CalculateTotalAcceleration(ABody* Body)
+{
+    FVector totalAcceleration = FVector::ZeroVector;
+
+    for (ABody* otherBody : majorPlanets)
+    {
+        if (otherBody != Body)
+        {
+            FVector direction = otherBody->GetActorLocation() - Body->GetActorLocation();
+            double distanceSquared = direction.SizeSquared();
+            double forceMagnitude = GRAVITY_CONSTANT * Body->GetMass() * otherBody->GetMass() / distanceSquared;
+            FVector force = direction.GetSafeNormal() * forceMagnitude;
+            totalAcceleration += force / Body->GetMass();
+        }
+    }
+
+    return totalAcceleration;
+}
